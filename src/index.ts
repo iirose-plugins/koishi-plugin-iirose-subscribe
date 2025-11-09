@@ -3,12 +3,33 @@ import { } from 'koishi-plugin-adapter-iirose';
 
 export const name = 'iirose-subscribe';
 
+export const inject = {
+  //  optional: [''],
+  required: ['database']
+};
+
+export const usage = `
+---
+
+# 快速说明
+1. 在群内发送iirose.sub.on，将会订阅BOT的消息
+2. 在群内发送iirose.sub.off，将会取消订阅BOT的消息
+3. 订阅状态会在数据库中保存，不会因为重启而消失
+4. 本插件只会在iirose中生效
+5. adminList为管理员列表，需要填写用户的唯一标识(如:5b0fe8a3b1ff2)，只有管理员才能使用订阅功能
+
+# 注意事项
+开启订阅状态后，私聊bot发送内容，会被转发到群内
+开启订阅状态后，群内发送内容，会被转发到私聊bot
+关闭订阅状态后，不会再转发消息
+
+---
+`;
+
 export interface Config
 {
   adminList: string[];
 }
-
-export const inject = ['database'];
 
 export const Config: Schema<Config> =
   Schema.object({
@@ -27,19 +48,6 @@ export interface subscribe
   uid: string;
   status: boolean;
 }
-
-const usage = `# 快速说明
-1. 在群内发送iirose.sub.on，将会订阅BOT的消息
-2. 在群内发送iirose.sub.off，将会取消订阅BOT的消息
-3. 订阅状态会在数据库中保存，不会因为重启而消失
-4. 本插件只会在iirose中生效
-5. adminList为管理员列表，需要填写用户的唯一标识(如:5b0fe8a3b1ff2)，只有管理员才能使用订阅功能
-
-# 注意事项
-开启订阅状态后，私聊bot发送内容，会被转发到群内
-开启订阅状态后，群内发送内容，会被转发到私聊bot
-关闭订阅状态后，不会再转发消息
-`;
 
 export function apply(ctx: Context, config: Config)
 {
