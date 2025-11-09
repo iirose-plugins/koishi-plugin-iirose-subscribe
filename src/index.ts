@@ -51,108 +51,113 @@ export interface subscribe
 
 export function apply(ctx: Context, config: Config)
 {
-  ctx.model.extend('iirose_subscribe', {
-    uid: 'string',
-    status: 'boolean'
-  }, {
-    primary: 'uid'
-  });
-
-  ctx.command('iirose', '花园工具');
-
-  ctx.command("iirose.sub", '订阅房间')
-    .subcommand('.on', '开启订阅')
-    .action(async (v, message) =>
-    {
-      if (v.session.platform !== 'iirose') { return ' [IIROSE-Subscribe] 该平台不支持使用此插件'; }
-
-      if (!config.adminList.includes(v.session.userId)) { return ' [IIROSE-Subscribe] 你没有权限使用此功能'; }
-
-      const userData = await ctx.database.get('iirose_subscribe', v.session.userId);
-
-      if (userData.length > 0 && userData[0].status)
-      {
-        return ' [IIROSE-Subscribe] 你已经设置为订阅状态了哦~';
-      } else if (userData.length > 0)
-      {
-        await ctx.database.set('iirose_subscribe', v.session.userId, {
-          status: true
-        });
-
-        return ` [IIROSE-Subscribe] 将 [*${v.session.username}*] 设置为BOT订阅状态`;
-      } else if (userData.length == 0)
-      {
-        ctx.database.create('iirose_subscribe', {
-          uid: v.session.userId,
-          status: true
-        });
-
-        return ` [IIROSE-Subscribe] 将 [*${v.session.username}*] 设置为BOT订阅状态`;
-      }
-    });
-
-  ctx.command("iirose.sub", '订阅房间')
-    .subcommand('.off', '关闭订阅')
-    .action(async (v, message) =>
-    {
-      if (v.session.platform !== 'iirose') { return ' [IIROSE-Subscribe] 该平台不支持使用此插件'; }
-
-      if (!config.adminList.includes(v.session.userId)) { return ' [IIROSE-Subscribe] 你没有权限使用此功能'; }
-
-      const userData = await ctx.database.get('iirose_subscribe', v.session.userId);
-
-      if (userData.length > 0 && !userData[0].status)
-      {
-        return ' [IIROSE-Subscribe] 你已经取消订阅状态了哦~';
-      } else if (userData.length > 0)
-      {
-        await ctx.database.set('iirose_subscribe', v.session.userId, {
-          status: false
-        });
-
-        return ` [IIROSE-Subscribe] 将 [*${v.session.username}*] 设置为BOT取消订阅状态`;
-      } else if (userData.length == 0)
-      {
-        ctx.database.create('iirose_subscribe', {
-          uid: v.session.userId,
-          status: false
-        });
-
-        return ` [IIROSE-Subscribe] 将 [*${v.session.username}*] 设置为BOT取消订阅状态`;
-      }
-    });
-
-  ctx.on('message', async (session) =>
+  ctx.on('ready', () =>
   {
-    if (session.platform !== 'iirose')
-    {
-      return;
-    }
+    ctx.model.extend('iirose_subscribe', {
+      uid: 'string',
+      status: 'boolean'
+    }, {
+      primary: 'uid'
+    });
 
-    const userData = await ctx.database.get('iirose_subscribe', session.userId);
+    //  其他iirose插件已经注册此指令
+    //  ctx.command('iirose', '花园工具');
 
-    const msg = session.content;
-    const channelId = session.channelId;
-
-    if (channelId.startsWith('public'))
-    {
-      const listTemp = await ctx.database.get('iirose_subscribe', { status: true });
-      const list = listTemp.map(v => v.uid);
-      list.forEach(async v =>
+    ctx.command("iirose.sub", '订阅房间')
+      .subcommand('.on', '开启订阅')
+      .action(async ({ session }) =>
       {
-        await session.bot.sendMessage(`private:${v}`, ` [*${session.username}*] ： ${msg}`);
-      });
-    } else if (channelId.startsWith('private'))
-    {
-      if (userData.length <= 0 || !userData[0].status) return;
+        if (session.platform !== 'iirose') { return ' [IIROSE-Subscribe] 该平台不支持使用此插件'; }
 
-      await session.bot.sendMessage('public', ` [*${session.username}*] ： ${msg}`);
-      const listTemp = await ctx.database.get('iirose_subscribe', { status: true });
-      const list = listTemp.map(v => v.uid);
-      list.forEach(async v =>
-      {
-        await session.bot.sendMessage(`private:${v}`, ` [*${session.username}*] ： ${msg}`);
+        if (!config.adminList.includes(session.userId)) { return ' [IIROSE-Subscribe] 你没有权限使用此功能'; }
+
+        const userData = await ctx.database.get('iirose_subscribe', session.userId);
+
+        if (userData.length > 0 && userData[0].status)
+        {
+          return ' [IIROSE-Subscribe] 你已经设置为订阅状态了哦~';
+        } else if (userData.length > 0)
+        {
+          await ctx.database.set('iirose_subscribe', session.userId, {
+            status: true
+          });
+
+          return ` [IIROSE-Subscribe] 将 [*${session.username}*] 设置为BOT订阅状态`;
+        } else if (userData.length == 0)
+        {
+          ctx.database.create('iirose_subscribe', {
+            uid: session.userId,
+            status: true
+          });
+
+          return ` [IIROSE-Subscribe] 将 [*${session.username}*] 设置为BOT订阅状态`;
+        }
       });
-    }
+
+    ctx.command("iirose.sub", '订阅房间')
+      .subcommand('.off', '关闭订阅')
+      .action(async ({ session }) =>
+      {
+        if (session.platform !== 'iirose') { return ' [IIROSE-Subscribe] 该平台不支持使用此插件'; }
+
+        if (!config.adminList.includes(session.userId)) { return ' [IIROSE-Subscribe] 你没有权限使用此功能'; }
+
+        const userData = await ctx.database.get('iirose_subscribe', session.userId);
+
+        if (userData.length > 0 && !userData[0].status)
+        {
+          return ' [IIROSE-Subscribe] 你已经取消订阅状态了哦~';
+        } else if (userData.length > 0)
+        {
+          await ctx.database.set('iirose_subscribe', session.userId, {
+            status: false
+          });
+
+          return ` [IIROSE-Subscribe] 将 [*${session.username}*] 设置为BOT取消订阅状态`;
+        } else if (userData.length == 0)
+        {
+          ctx.database.create('iirose_subscribe', {
+            uid: session.userId,
+            status: false
+          });
+
+          return ` [IIROSE-Subscribe] 将 [*${session.username}*] 设置为BOT取消订阅状态`;
+        }
+      });
+
+    ctx.on('message', async (session) =>
+    {
+      if (session.platform !== 'iirose')
+      {
+        return;
+      }
+
+      const userData = await ctx.database.get('iirose_subscribe', session.userId);
+
+      const msg = session.content;
+      const channelId = session.channelId;
+
+      if (channelId.startsWith('public'))
+      {
+        const listTemp = await ctx.database.get('iirose_subscribe', { status: true });
+        const list = listTemp.map(v => v.uid);
+        list.forEach(async v =>
+        {
+          await session.bot.sendMessage(`private:${v}`, ` [*${session.username}*] ： ${msg}`);
+        });
+      } else if (channelId.startsWith('private'))
+      {
+        if (userData.length <= 0 || !userData[0].status) return;
+
+        await session.bot.sendMessage('public', ` [*${session.username}*] ： ${msg}`);
+        const listTemp = await ctx.database.get('iirose_subscribe', { status: true });
+        const list = listTemp.map(v => v.uid);
+        list.forEach(async v =>
+        {
+          await session.bot.sendMessage(`private:${v}`, ` [*${session.username}*] ： ${msg}`);
+        });
+      }
+    });
+
   });
 }
